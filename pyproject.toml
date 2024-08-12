@@ -1,17 +1,32 @@
-[tool.poetry]
+[project]
 name = "filedrop"
 version = "0.1.0"
-description = ""
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
+description = "Simple filedrop server"
 readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+  {email = "hi@pradyunsg.me"},
+  {name = "Tzu-ping Chung"}
+]
+maintainers = [
+  {name = "Brett Cannon", email = "brett@python.org"}
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python"
+]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-flask = "*"
-pillow = "*"
+dependencies = [
+  "pillow",
+  "flask",
+]
 
+# when source dir is not called src, it has to be specified here
+# For example: replace main:main with srcfiles.main:main
+# This calles the main() function from srcfiles/main.py
+[project.scripts]
+cli = "main:main"
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+# [project.entry-points."spam.magical"]
+# tomatoes = "spam:main_tomatoes"
+

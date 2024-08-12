@@ -53,5 +53,8 @@ def upload_file():
 
     return render_template('upload_success.html')
 
+def main():
+    app.run(debug=True, port=8115)
+
 if __name__ == '__main__':
     app.run(debug=True, port=8115)

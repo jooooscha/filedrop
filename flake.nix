@@ -1,44 +1,70 @@
 {
-  description = "Application packaged using poetry2nix";
+  description = "A basic flake using pyproject.toml project metadata";
 
   inputs = {
-    flake-utils.url = "github:numtide/flake-utils";
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable-small";
-    poetry2nix = {
-      url = "github:nix-community/poetry2nix";
+    pyproject-nix = {
+      url = "github:nix-community/pyproject.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, poetry2nix }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        # see https://github.com/nix-community/poetry2nix/tree/master#api for more functions and examples.
-        pkgs = nixpkgs.legacyPackages.${system};
-        inherit (poetry2nix.lib.mkPoetry2Nix { inherit pkgs; }) mkPoetryApplication;
-      in
-      {
-        packages = {
-          myapp = mkPoetryApplication { projectDir = self; };
-          default = self.packages.${system}.myapp;
+  outputs = { nixpkgs, pyproject-nix, ... }:
+    let
+      inherit (nixpkgs) lib;
+
+      # Loads pyproject.toml into a high-level project representation
+      # Do you notice how this is not tied to any `system` attribute or package sets?
+      # That is because `project` refers to a pure data representation.
+      project = pyproject-nix.lib.project.loadPyproject {
+        # Read & unmarshal pyproject.toml relative to this project root.
+        # projectRoot is also used to set `src` for renderers such as buildPythonPackage.
+        projectRoot = ./.;
+      };
+
+      # This example is only using x86_64-linux
+      pkgs = nixpkgs.legacyPackages.x86_64-linux;
+
+      # We are using the default nixpkgs Python3 interpreter & package set.
+      #
+      # This means that you are purposefully ignoring:
+      # - Version bounds
+      # - Dependency sources (meaning local path dependencies won't resolve to the local path)
+      #
+      # To use packages from local sources see "Overriding Python packages" in the nixpkgs manual:
+      # https://nixos.org/manual/nixpkgs/stable/#reference
+      #
+      # Or use an overlay generator such as pdm2nix:
+      # https://github.com/adisbladis/pdm2nix
+      python = pkgs.python3;
+
+    in
+    {
+      # Create a development shell containing dependencies from `pyproject.toml`
+      devShells.x86_64-linux.default =
+        let
+          # Returns a function that can be passed to `python.withPackages`
+          arg = project.renderers.withPackages { inherit python; };
+
+          # Returns a wrapped environment (virtualenv like) with all our packages
+          pythonEnv = python.withPackages arg;
+
+        in
+        # Create a devShell like normal.
+        pkgs.mkShell {
+          packages = [ pythonEnv ];
         };
 
-        # Shell for app dependencies.
-        #
-        #     nix develop
-        #
-        # Use this shell for developing your app.
-        devShells.default = pkgs.mkShell {
-          inputsFrom = [ self.packages.${system}.myapp ];
-        };
-
-        # Shell for poetry.
-        #
-        #     nix develop .#poetry
-        #
-        # Use this shell for changes to pyproject.toml and poetry.lock.
-        devShells.poetry = pkgs.mkShell {
-          packages = [ pkgs.poetry ];
-        };
-      });
+      # Build our package using `buildPythonPackage
+      packages.x86_64-linux.default =
+        let
+          # Returns an attribute set that can be passed to `buildPythonPackage`.
+          attrs = project.renderers.buildPythonPackage { inherit python; };
+        in
+        # Pass attributes to buildPythonPackage.
+          # Here is a good spot to add on any missing or custom attributes.
+        python.pkgs.buildPythonPackage (attrs // {
+          env.CUSTOM_ENVVAR = "hello";
+        });
+    };
 }
+
