@@ -25,7 +25,7 @@ dependencies = [
 # For example: replace main:main with srcfiles.main:main
 # This calles the main() function from srcfiles/main.py
 [project.scripts]
-cli = "main:main"
+cli = "app.main:main"
 
 # [project.entry-points."spam.magical"]
 # tomatoes = "spam:main_tomatoes"

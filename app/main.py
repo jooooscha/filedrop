@@ -3,8 +3,9 @@ from PIL import Image
 from PIL.ExifTags import TAGS
 import os
 import time
+import logging
 
-app = Flask(__name__)
+app = Flask(__name__, root_path="app/")
 
 # Specify the directory where uploaded files will be saved
 UPLOAD_FOLDER = '/mnt/deponia/photoview/media/Pictures/TabeaUpload'
@@ -28,15 +29,11 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    if 'files' not in request.files:
-        return "No file part"
+    app.logger.debug(f"Reqeust: {request}")
+    app.logger.debug(f"Reqeust: {request.files}")
 
-    files = request.files.getlist('files')
-
-    if not files or all(f.filename == '' for f in files):
-        return "No selected files"
-
-    for file in files:
+    for name, file in request.files.items():
+        app.logger.info(f"File: {file}")
         if file:
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
             file.save(filepath)
@@ -51,10 +48,10 @@ def upload_file():
                 timestamp = time.mktime(struct_time)
                 os.utime(filepath, (timestamp, timestamp))
 
-    return render_template('upload_success.html')
+    #  return render_template('upload_success.html')
 
 def main():
     app.run(debug=True, port=8115)
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8115)
+    main()
