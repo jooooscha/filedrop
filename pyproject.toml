@@ -19,6 +19,7 @@ classifiers = [
 dependencies = [
   "pillow",
   "flask",
+  "waitress",
 ]
 
 # when source dir is not called src, it has to be specified here

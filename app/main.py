@@ -4,11 +4,19 @@ from PIL.ExifTags import TAGS
 import os
 import time
 import logging
+import sys
+from waitress import serve
+import logging
 
 app = Flask(__name__, root_path="app/")
 
 # Specify the directory where uploaded files will be saved
-UPLOAD_FOLDER = '/mnt/deponia/photoview/media/Pictures/TabeaUpload'
+if len(sys.argv) != 2:
+    exit("Please specify the upload directory using the first argument")
+
+
+UPLOAD_FOLDER = sys.argv[1]
+print(f"Writing uploads to '{UPLOAD_FOLDER}'")
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
@@ -48,10 +56,12 @@ def upload_file():
                 timestamp = time.mktime(struct_time)
                 os.utime(filepath, (timestamp, timestamp))
 
-    #  return render_template('upload_success.html')
+    return render_template('upload_success.html')
 
 def main():
-    app.run(debug=True, port=8115)
+    logger = logging.getLogger('waitress')
+    logger.setLevel(logging.DEBUG)
+    serve(app, host="127.0.0.1", port=8115)
 
 if __name__ == '__main__':
     main()
