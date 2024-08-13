@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template_string, request, redirect, url_for
 from PIL import Image
 from PIL.ExifTags import TAGS
 import os
@@ -7,6 +7,7 @@ import logging
 import sys
 from waitress import serve
 import logging
+import index_template
 
 app = Flask(__name__, root_path="app/")
 
@@ -33,7 +34,7 @@ def get_photo_taken_time(image):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return index_template.template(app)
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -56,7 +57,7 @@ def upload_file():
                 timestamp = time.mktime(struct_time)
                 os.utime(filepath, (timestamp, timestamp))
 
-    return render_template('upload_success.html')
+    return render_template_string("<html></html>")
 
 def main():
     logger = logging.getLogger('waitress')
